@@ -69,12 +69,12 @@ export default defineType({
         },
       },
       validation: Rule => Rule.required(),
-    }),
-    // Post date (publishedAt)
+    }),    // Post date (publishedAt)
     defineField({
       name: 'publishedAt',
       title: 'Post Date',
       type: 'datetime',
+      initialValue: () => new Date().toISOString(),
       validation: Rule => Rule.required(),
     }),
     // Status: published/draft/inactive
