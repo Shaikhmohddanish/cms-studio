@@ -48,50 +48,52 @@ export default defineType({
             .replace(/\s+/g, '-')
             .replace(/[^a-z0-9\-]/g, '')
 
-          try {
-            const client = context.getClient({ apiVersion: '2023-06-15' })
-              // Get all existing slugs that start with our base slug
+          try {            const client = context.getClient({ apiVersion: '2023-06-15' })
+            
+            // Get all existing article slugs
             const existingSlugs = await client.fetch(
-              `*[_type == "article"] {
+              `*[_type == "article" && defined(slug.current)] {
                 "slug": slug.current
               }`
             )
 
-            const usedSlugs = existingSlugs
-              .map((doc: { slug: string }) => doc.slug)
-              .filter((slug: string) => slug && slug.startsWith(slugBase))
+            const allSlugs = existingSlugs.map((doc: { slug: string }) => doc.slug)
+            console.log('All article slugs:', allSlugs)
 
-            console.log('Base slug:', slugBase)
-            console.log('Found existing slugs:', usedSlugs)
+            // Filter slugs that match our pattern
+            const matchingSlugs = allSlugs.filter((slug: string) => {
+              return slug === slugBase || (slug && slug.match(new RegExp(`^${slugBase}-\\d+$`)))
+            })
 
-            // If base slug is not used, return it
-            if (!usedSlugs.includes(slugBase)) {
+            console.log('Matching slugs for', slugBase, ':', matchingSlugs)
+
+            // If no matching slugs, use base slug
+            if (matchingSlugs.length === 0) {
+              console.log('No matches found, using base slug:', slugBase)
               return slugBase
             }
 
-            // Find the highest number used
-            let highestNumber = 1
-            usedSlugs.forEach((usedSlug: string) => {
-              if (usedSlug === slugBase) {
-                // Base slug exists, so we need at least -2
-                highestNumber = Math.max(highestNumber, 1)
-              } else if (usedSlug.startsWith(slugBase + '-')) {
-                // Extract number from slug like "my-post-5"
-                const numberPart = usedSlug.substring(slugBase.length + 1)
-                const number = parseInt(numberPart, 10)
-                console.log(`Checking slug: ${usedSlug}, number part: ${numberPart}, parsed: ${number}`)
-                if (!isNaN(number) && number > 0) {
-                  highestNumber = Math.max(highestNumber, number)
+            // Find highest number
+            let maxNumber = 0
+            matchingSlugs.forEach((slug: string) => {
+              if (slug === slugBase) {
+                maxNumber = Math.max(maxNumber, 1) // Base slug counts as 1
+              } else {
+                const match = slug.match(new RegExp(`^${slugBase}-(\\d+)$`))
+                if (match) {
+                  const num = parseInt(match[1], 10)
+                  maxNumber = Math.max(maxNumber, num)
                 }
               }
             })
 
-            console.log('Highest number found:', highestNumber)
-            const finalSlug = `${slugBase}-${highestNumber + 1}`
-            console.log('Generated final slug:', finalSlug)
-
-            // Return the next available number
-            return finalSlug
+            const nextNumber = maxNumber + 1
+            const newSlug = `${slugBase}-${nextNumber}`
+            
+            console.log('Max number found:', maxNumber)
+            console.log('Next slug will be:', newSlug)
+            
+            return newSlug
 
           } catch (error) {
             console.warn('Could not check for duplicate slugs:', error)
