@@ -27,18 +27,26 @@ export default defineType({
           let slug = slugBase
           let i = 1
 
-          const existingSlugs = await context.getClient({ apiVersion: '2023-06-15' }).fetch(
-            `*[_type == "category" && slug.current match $slugBase] {
-              "slug": slug.current
-            }`,
-            { slugBase: `${slugBase}*` }
-          )
+          try {
+            const client = context.getClient ? context.getClient({ apiVersion: '2023-06-15' }) : null
+            
+            if (client) {
+              const existingSlugs = await client.fetch(
+                `*[_type == "category" && slug.current match $slugBase] {
+                  "slug": slug.current
+                }`,
+                { slugBase: `${slugBase}*` }
+              )
 
-          const usedSlugs = existingSlugs.map((doc: { slug: string }) => doc.slug)
+              const usedSlugs = existingSlugs.map((doc: { slug: string }) => doc.slug)
 
-          while (usedSlugs.includes(slug)) {
-            i++
-            slug = `${slugBase}-${i}`
+              while (usedSlugs.includes(slug)) {
+                i++
+                slug = `${slugBase}-${i}`
+              }
+            }
+          } catch (error) {
+            console.warn('Could not check for duplicate slugs:', error)
           }
 
           return slug
