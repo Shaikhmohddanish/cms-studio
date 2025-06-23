@@ -50,16 +50,19 @@ export default defineType({
 
           try {
             const client = context.getClient({ apiVersion: '2023-06-15' })
-            
-            // Get all existing slugs that start with our base slug
+              // Get all existing slugs that start with our base slug
             const existingSlugs = await client.fetch(
-              `*[_type == "article" && slug.current match $slugPattern] {
+              `*[_type == "article"] {
                 "slug": slug.current
-              }`,
-              { slugPattern: `${slugBase}*` }
+              }`
             )
 
-            const usedSlugs = existingSlugs.map((doc: { slug: string }) => doc.slug)
+            const usedSlugs = existingSlugs
+              .map((doc: { slug: string }) => doc.slug)
+              .filter((slug: string) => slug && slug.startsWith(slugBase))
+
+            console.log('Base slug:', slugBase)
+            console.log('Found existing slugs:', usedSlugs)
 
             // If base slug is not used, return it
             if (!usedSlugs.includes(slugBase)) {
@@ -76,14 +79,19 @@ export default defineType({
                 // Extract number from slug like "my-post-5"
                 const numberPart = usedSlug.substring(slugBase.length + 1)
                 const number = parseInt(numberPart, 10)
-                if (!isNaN(number)) {
+                console.log(`Checking slug: ${usedSlug}, number part: ${numberPart}, parsed: ${number}`)
+                if (!isNaN(number) && number > 0) {
                   highestNumber = Math.max(highestNumber, number)
                 }
               }
             })
 
+            console.log('Highest number found:', highestNumber)
+            const finalSlug = `${slugBase}-${highestNumber + 1}`
+            console.log('Generated final slug:', finalSlug)
+
             // Return the next available number
-            return `${slugBase}-${highestNumber + 1}`
+            return finalSlug
 
           } catch (error) {
             console.warn('Could not check for duplicate slugs:', error)
