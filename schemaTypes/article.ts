@@ -29,19 +29,6 @@ export default defineType({
         storeOriginalFilename: true,
         accept: 'image/*',
       },
-      fields: [
-        {
-          name: 'alt',
-          type: 'string',
-          title: 'Alt Text',
-          description: 'Important for SEO and accessibility.',
-        },
-        {
-          name: 'caption',
-          type: 'string',
-          title: 'Caption',
-        }
-      ]
     }),
     // Blog category (reference)
     defineField({
