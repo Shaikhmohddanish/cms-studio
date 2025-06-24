@@ -19,13 +19,29 @@ export default defineType({
       title: 'Post Description',
       type: 'text',
       rows: 3,
-    }),
-    // Feature image
+    }),    // Feature image
     defineField({
       name: 'featureImage',
       title: 'Feature Image',
       type: 'image',
-      options: { hotspot: true },
+      options: {
+        hotspot: false,
+        storeOriginalFilename: true,
+        accept: 'image/*',
+      },
+      fields: [
+        {
+          name: 'alt',
+          type: 'string',
+          title: 'Alt Text',
+          description: 'Important for SEO and accessibility.',
+        },
+        {
+          name: 'caption',
+          type: 'string',
+          title: 'Caption',
+        }
+      ]
     }),
     // Blog category (reference)
     defineField({
@@ -48,7 +64,8 @@ export default defineType({
             .replace(/\s+/g, '-')
             .replace(/[^a-z0-9\-]/g, '')
 
-          try {            const client = context.getClient({ apiVersion: '2023-06-15' })
+          try {            
+            const client = context.getClient({ apiVersion: '2023-06-15' })
             
             // Get all existing article slugs
             const existingSlugs = await client.fetch(
