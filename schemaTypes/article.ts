@@ -10,8 +10,18 @@ export default defineType({
     defineField({
       name: 'title',
       title: 'Post Title',
-      type: 'string',
-      validation: Rule => Rule.required(),
+      type: 'array',
+      of: [{ type: 'block' }],
+      validation: Rule => Rule.required().custom((value) => {
+        // Handle legacy string titles during migration
+        if (typeof value === 'string') {
+          return true // Allow strings temporarily during migration
+        }
+        if (!value || !Array.isArray(value) || value.length === 0) {
+          return 'Title is required'
+        }
+        return true
+      }),
     }),
     // Post description (short)
     defineField({
@@ -44,8 +54,25 @@ export default defineType({
       description: 'Click "Generate" to create slug from title (auto-adds numbers for duplicates)',
       options: {
         source: 'title',
-        maxLength: 96,        slugify: async (input: string, context: any) => {
-          const slugBase = input
+        maxLength: 96,        slugify: async (input: string | any[], context: any) => {
+          // Handle both string (legacy) and array (rich text) formats
+          let titleText = ''
+          if (typeof input === 'string') {
+            titleText = input
+          } else if (Array.isArray(input)) {
+            // Extract plain text from rich text blocks
+            titleText = input
+              .filter(block => block._type === 'block' && block.children)
+              .map(block => 
+                block.children
+                  .filter((child: any) => child._type === 'span')
+                  .map((child: any) => child.text)
+                  .join('')
+              )
+              .join(' ')
+          }
+          
+          const slugBase = titleText
             .toLowerCase()
             .trim()
             .replace(/\s+/g, '-')
