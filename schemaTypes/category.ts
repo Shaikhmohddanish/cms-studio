@@ -9,7 +9,33 @@ export default defineType({
       name: 'title',
       title: 'Category Title',
       type: 'array',
-      of: [{ type: 'block' }],
+      of: [{ 
+        type: 'block',
+        styles: [{title: 'Normal', value: 'normal'}],
+        lists: [],
+        marks: {
+          decorators: [
+            {title: 'Strong', value: 'strong'},
+            {title: 'Emphasis', value: 'em'},
+            {title: 'Underline', value: 'underline'},
+          ],
+          // Add link support to titles as well
+          annotations: [
+            {
+              title: 'URL',
+              name: 'link',
+              type: 'object',
+              fields: [
+                {
+                  title: 'URL',
+                  name: 'href',
+                  type: 'url',
+                },
+              ],
+            },
+          ],
+        },
+      }],
       validation: Rule => Rule.required().custom((value) => {
         // Handle legacy string titles during migration
         if (typeof value === 'string') {

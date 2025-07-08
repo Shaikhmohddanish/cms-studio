@@ -1,5 +1,6 @@
 // /studio/schemas/article.ts
 import {defineType, defineField} from 'sanity'
+import React from 'react'
 
 export default defineType({
   name: 'article',
@@ -11,7 +12,33 @@ export default defineType({
       name: 'title',
       title: 'Post Title',
       type: 'array',
-      of: [{ type: 'block' }],
+      of: [{ 
+        type: 'block',
+        styles: [{title: 'Normal', value: 'normal'}],
+        lists: [],
+        marks: {
+          decorators: [
+            {title: 'Strong', value: 'strong'},
+            {title: 'Emphasis', value: 'em'},
+            {title: 'Underline', value: 'underline'},
+          ],
+          // Add link support to titles as well
+          annotations: [
+            {
+              title: 'URL',
+              name: 'link',
+              type: 'object',
+              fields: [
+                {
+                  title: 'URL',
+                  name: 'href',
+                  type: 'url',
+                },
+              ],
+            },
+          ],
+        },
+      }],
       validation: Rule => Rule.required().custom((value) => {
         // Handle legacy string titles during migration
         if (typeof value === 'string') {
@@ -180,8 +207,7 @@ export default defineType({
     defineField({
       name: 'content',
       title: 'Content',
-      type: 'array',
-      of: [{ type: 'block' }],
+      type: 'blockContent', // Use our new blockContent type here
       validation: Rule => Rule.required(),
     }),
   ],
